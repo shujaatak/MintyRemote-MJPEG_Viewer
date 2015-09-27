@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Widget</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
     <widget class="QLabel" name="imgOutput">
      <property name="sizePolicy">
@@ -24,6 +24,16 @@
      </property>
      <property name="text">
       <string>Image goes here</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPlainTextEdit" name="imgDebug"/>
+   </item>
+   <item>
+    <widget class="QPushButton" name="stopButton">
+     <property name="text">
+      <string>PushButton</string>
      </property>
     </widget>
    </item>

@@ -29,7 +29,7 @@ private slots:
     void assembleJPEG(QByteArray);
     void displayJPEG();
 
-//    void on_stopButton_clicked();
+    void on_stopButton_clicked();
 
 private:
     Ui::Widget *ui;

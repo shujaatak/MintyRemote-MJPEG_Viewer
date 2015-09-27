@@ -82,8 +82,8 @@ void Widget::httpReadyRead()
     // signal of the QNetworkReply
 
     QByteArray response = reply->readAll();
-    //    ui->imgDebug->appendPlainText("New packet:");
-    //    ui->imgDebug->appendPlainText(response);
+        ui->imgDebug->appendPlainText("New packet:");
+        ui->imgDebug->appendPlainText(response);
     if(response.at(0)=='-' && response.at(1)=='-')
     {
         jpegBA.clear();
@@ -133,10 +133,10 @@ void Widget::displayJPEG()
 
 }
 
-//void Widget::on_stopButton_clicked()
-//{
-//    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
-//}
+void Widget::on_stopButton_clicked()
+{
+    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+}
 
 void Widget::resizeEvent(QResizeEvent *ev)
 {

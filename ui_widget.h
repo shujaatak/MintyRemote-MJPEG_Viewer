@@ -13,9 +13,11 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QPlainTextEdit>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -23,18 +25,20 @@ QT_BEGIN_NAMESPACE
 class Ui_Widget
 {
 public:
-    QVBoxLayout *verticalLayout;
+    QHBoxLayout *horizontalLayout;
     QLabel *imgOutput;
+    QPlainTextEdit *imgDebug;
+    QPushButton *stopButton;
 
     void setupUi(QWidget *Widget)
     {
         if (Widget->objectName().isEmpty())
             Widget->setObjectName(QStringLiteral("Widget"));
         Widget->resize(315, 317);
-        verticalLayout = new QVBoxLayout(Widget);
-        verticalLayout->setSpacing(6);
-        verticalLayout->setContentsMargins(11, 11, 11, 11);
-        verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
+        horizontalLayout = new QHBoxLayout(Widget);
+        horizontalLayout->setSpacing(6);
+        horizontalLayout->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
         imgOutput = new QLabel(Widget);
         imgOutput->setObjectName(QStringLiteral("imgOutput"));
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -43,7 +47,17 @@ public:
         sizePolicy.setHeightForWidth(imgOutput->sizePolicy().hasHeightForWidth());
         imgOutput->setSizePolicy(sizePolicy);
 
-        verticalLayout->addWidget(imgOutput);
+        horizontalLayout->addWidget(imgOutput);
+
+        imgDebug = new QPlainTextEdit(Widget);
+        imgDebug->setObjectName(QStringLiteral("imgDebug"));
+
+        horizontalLayout->addWidget(imgDebug);
+
+        stopButton = new QPushButton(Widget);
+        stopButton->setObjectName(QStringLiteral("stopButton"));
+
+        horizontalLayout->addWidget(stopButton);
 
 
         retranslateUi(Widget);
@@ -55,6 +69,7 @@ public:
     {
         Widget->setWindowTitle(QApplication::translate("Widget", "Widget", 0));
         imgOutput->setText(QApplication::translate("Widget", "Image goes here", 0));
+        stopButton->setText(QApplication::translate("Widget", "PushButton", 0));
     } // retranslateUi
 
 };
