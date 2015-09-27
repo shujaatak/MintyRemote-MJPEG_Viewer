@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'widget.h'
 **
-** Created by: The Qt Meta Object Compiler version 67 (Qt 5.4.2)
+** Created by: The Qt Meta Object Compiler version 67 (Qt 5.5.0)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -12,7 +12,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'widget.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 67
-#error "This file was generated using the moc from 5.4.2. It"
+#error "This file was generated using the moc from 5.5.0. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -20,11 +20,11 @@
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_Widget_t {
     QByteArrayData data[6];
-    char stringdata[61];
+    char stringdata0[60];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
-    qptrdiff(offsetof(qt_meta_stringdata_Widget_t, stringdata) + ofs \
+    qptrdiff(offsetof(qt_meta_stringdata_Widget_t, stringdata0) + ofs \
         - idx * sizeof(QByteArrayData)) \
     )
 static const qt_meta_stringdata_Widget_t qt_meta_stringdata_Widget = {
@@ -33,12 +33,12 @@ QT_MOC_LITERAL(0, 0, 6), // "Widget"
 QT_MOC_LITERAL(1, 7, 12), // "httpFinished"
 QT_MOC_LITERAL(2, 20, 0), // ""
 QT_MOC_LITERAL(3, 21, 13), // "httpReadyRead"
-QT_MOC_LITERAL(4, 35, 12), // "stopTransfer"
-QT_MOC_LITERAL(5, 48, 12) // "assembleJPEG"
+QT_MOC_LITERAL(4, 35, 12), // "assembleJPEG"
+QT_MOC_LITERAL(5, 48, 11) // "displayJPEG"
 
     },
     "Widget\0httpFinished\0\0httpReadyRead\0"
-    "stopTransfer\0assembleJPEG"
+    "assembleJPEG\0displayJPEG"
 };
 #undef QT_MOC_LITERAL
 
@@ -58,14 +58,14 @@ static const uint qt_meta_data_Widget[] = {
  // slots: name, argc, parameters, tag, flags
        1,    0,   34,    2, 0x08 /* Private */,
        3,    0,   35,    2, 0x08 /* Private */,
-       4,    0,   36,    2, 0x08 /* Private */,
-       5,    1,   37,    2, 0x08 /* Private */,
+       4,    1,   36,    2, 0x08 /* Private */,
+       5,    0,   39,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void,
     QMetaType::Void, QMetaType::QByteArray,    2,
+    QMetaType::Void,
 
        0        // eod
 };
@@ -74,11 +74,12 @@ void Widget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
 {
     if (_c == QMetaObject::InvokeMetaMethod) {
         Widget *_t = static_cast<Widget *>(_o);
+        Q_UNUSED(_t)
         switch (_id) {
         case 0: _t->httpFinished(); break;
         case 1: _t->httpReadyRead(); break;
-        case 2: _t->stopTransfer(); break;
-        case 3: _t->assembleJPEG((*reinterpret_cast< QByteArray(*)>(_a[1]))); break;
+        case 2: _t->assembleJPEG((*reinterpret_cast< QByteArray(*)>(_a[1]))); break;
+        case 3: _t->displayJPEG(); break;
         default: ;
         }
     }
@@ -98,7 +99,7 @@ const QMetaObject *Widget::metaObject() const
 void *Widget::qt_metacast(const char *_clname)
 {
     if (!_clname) return Q_NULLPTR;
-    if (!strcmp(_clname, qt_meta_stringdata_Widget.stringdata))
+    if (!strcmp(_clname, qt_meta_stringdata_Widget.stringdata0))
         return static_cast<void*>(const_cast< Widget*>(this));
     return QWidget::qt_metacast(_clname);
 }

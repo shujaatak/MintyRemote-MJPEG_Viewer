@@ -6,10 +6,10 @@ Widget::Widget(QWidget *parent) :
     ui(new Ui::Widget)
 {
     ui->setupUi(this);
-    url = QUrl::fromEncoded("http://24.52.217.108:8090");
+    url = QUrl::fromEncoded("http://192.168.0.101:8081");
     startRequest(url);
     jpegBA.clear();
-    connect(ui->stopButton,SIGNAL(clicked(bool)),this,SLOT(stopTransfer()));
+    imageReady=false;
 }
 
 Widget::~Widget()
@@ -72,8 +72,6 @@ void Widget::httpFinished()
     }
     reply->deleteLater();
     reply = 0;
-    //    delete file;
-    //    file = 0;
 }
 
 void Widget::httpReadyRead()
@@ -82,22 +80,26 @@ void Widget::httpReadyRead()
     // We read all of its new data and write it into the file.
     // That way we use less RAM than when reading it at the finished()
     // signal of the QNetworkReply
-    //    if (file)
-    //        file->write(reply->readAll());
-    qDebug() << reply->bytesAvailable() << " bytes available";
+
     QByteArray response = reply->readAll();
+    //    ui->imgDebug->appendPlainText("New packet:");
+    //    ui->imgDebug->appendPlainText(response);
     if(response.at(0)=='-' && response.at(1)=='-')
     {
-        // Collect JPEG Size
-        QString basize = response;
-        basize.remove(0,59);
-        QByteArray chunk = basize.toLocal8Bit();
-        basize = basize.trimmed();
-        basize.remove(5,8);
-        jpegSize = basize.toLong();
-        qDebug() << jpegSize << " bytes expected";
-        chunk.remove(0,16); // send to jpeg assembler
-        assembleJPEG(chunk);
+        jpegBA.clear();
+
+        // Collect JPEG frame size
+        response.remove(0,61);
+        QByteArray chunk = response;
+
+        response = response.trimmed();
+        response.remove(5,8);
+        jpegSize = response.toLong();
+        //        ui->imgDebug->clear();
+        //        ui->imgDebug->appendPlainText(QString("%1 bytes expected").arg(jpegSize));
+
+        chunk.remove(0,14);
+        assembleJPEG(chunk); // send to jpeg assembler
     }
     else
     {
@@ -105,16 +107,46 @@ void Widget::httpReadyRead()
     }
 }
 
-void Widget::stopTransfer()
-{
-    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
-    //    qnam.deleteLater();
-    //    qnam.blockSignals(true);
-}
-
 void Widget::assembleJPEG(QByteArray packet)
 {
     jpegBA.append(packet);
-    qDebug() << jpegBA.size() << " bytes received";
+    if(jpegBA.size()>=jpegSize)
+    {
+        jpegBA.chop(2);
+        displayJPEG();
+        //        jpegBA.clear();
+    }
 }
 
+void Widget::displayJPEG()
+{
+    QPixmap img;
+    img.loadFromData(jpegBA);
+    ui->imgOutput->setPixmap(img);
+    imageReady=true;
+
+    const QPixmap *p = ui->imgOutput->pixmap();
+    int w = ui->imgOutput->width();
+    int h = ui->imgOutput->height();
+    qDebug() << "width: " << w;
+    ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
+
+}
+
+//void Widget::on_stopButton_clicked()
+//{
+//    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+//}
+
+void Widget::resizeEvent(QResizeEvent *ev)
+{
+    if(imageReady)
+    {
+        const QPixmap *p = ui->imgOutput->pixmap();
+        int w = ui->imgOutput->width();
+        int h = ui->imgOutput->height();
+        qDebug() << "width: " << w;
+        ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
+    }
+    QWidget::resizeEvent(ev);
+}

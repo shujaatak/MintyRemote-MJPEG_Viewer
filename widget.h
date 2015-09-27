@@ -15,6 +15,9 @@ class Widget : public QWidget
 {
     Q_OBJECT
 
+protected:
+    void resizeEvent(QResizeEvent* ev) Q_DECL_OVERRIDE;
+
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
@@ -23,8 +26,10 @@ public:
 private slots:
     void httpFinished();
     void httpReadyRead();
-    void stopTransfer();
     void assembleJPEG(QByteArray);
+    void displayJPEG();
+
+//    void on_stopButton_clicked();
 
 private:
     Ui::Widget *ui;
@@ -32,8 +37,9 @@ private:
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
     bool httpRequestAborted;
-    quint16 jpegSize;
+    quint32 jpegSize;
     QByteArray jpegBA;
+    bool imageReady;
 };
 
 #endif // WIDGET_H

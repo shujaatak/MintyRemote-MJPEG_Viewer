@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>309</width>
-    <height>341</height>
+    <width>315</width>
+    <height>317</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,18 +16,14 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="imgOutput">
-     <property name="text">
-      <string>TextLabel</string>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPlainTextEdit" name="imgDebug"/>
-   </item>
-   <item>
-    <widget class="QPushButton" name="stopButton">
      <property name="text">
-      <string>Stop</string>
+      <string>Image goes here</string>
      </property>
     </widget>
    </item>
