@@ -10,6 +10,9 @@ Widget::Widget(QWidget *parent) :
     startRequest(url);
     jpegBA.clear();
     imageReady=false;
+    status=0;
+    ui->imgDebug->hide();
+//    ui->imgOutput->hide();
 }
 
 Widget::~Widget()
@@ -82,55 +85,77 @@ void Widget::httpReadyRead()
     // signal of the QNetworkReply
 
     QByteArray response = reply->readAll();
-        ui->imgDebug->appendPlainText("New packet:");
-        ui->imgDebug->appendPlainText(response);
-    if(response.at(0)=='-' && response.at(1)=='-')
+//    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+
+    switch(status)
     {
-        jpegBA.clear();
+    case 0: // No START FRAME has been received
+        parseImageData(response);
 
-        // Collect JPEG frame size
-        response.remove(0,61);
-        QByteArray chunk = response;
-
-        response = response.trimmed();
-        response.remove(5,8);
-        jpegSize = response.toLong();
-        //        ui->imgDebug->clear();
-        //        ui->imgDebug->appendPlainText(QString("%1 bytes expected").arg(jpegSize));
-
-        chunk.remove(0,14);
-        assembleJPEG(chunk); // send to jpeg assembler
-    }
-    else
-    {
+        break;
+    case 1: // Frame is already being built
         assembleJPEG(response);
+        break;
+    default:
+        break;
     }
+
+    //        ui->imgDebug->appendPlainText("New packet:");
+    //        ui->imgDebug->appendPlainText(response);
 }
 
 void Widget::assembleJPEG(QByteArray packet)
 {
-    jpegBA.append(packet);
+    // Is new packet going to go over the limit of the JPEG frame size?
+//    qDebug() << "Current size: " << jpegBA.size() << ", "
+//             << "JPEG frame: " << jpegSize << ", "
+//             << "incoming packet: " << packet.size() << ", bytes needed: " << jpegSize-jpegBA.size();
+
+    //    jpegBA.append(packet);
+
+    // Only append as many bytes as needed to complete the frame.
+    quint32 bytesNeeded = jpegSize-jpegBA.size();
+    jpegBA.append(packet.left(bytesNeeded));
+//    qDebug() << "Current size: " << jpegBA.size();
     if(jpegBA.size()>=jpegSize)
     {
         jpegBA.chop(2);
         displayJPEG();
-        //        jpegBA.clear();
+        jpegBA.clear();
+        status=0;
+
+        packet.remove(0, bytesNeeded+2);
+        if(packet.size()>0)
+        {
+//            qDebug() << packet.size() << " bytes left in packet";
+            parseImageData(packet);
+            //            ui->imgDebug->appendPlainText("Bytes left:");
+            //            ui->imgDebug->appendPlainText(packet);
+        }
+
     }
+//    connect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+
 }
 
 void Widget::displayJPEG()
 {
+     disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+
     QPixmap img;
+//    qDebug() << "jpegBA size: " << jpegBA.size();
     img.loadFromData(jpegBA);
-    ui->imgOutput->setPixmap(img);
-    imageReady=true;
-
-    const QPixmap *p = ui->imgOutput->pixmap();
-    int w = ui->imgOutput->width();
+if(!img.isNull())
+{
+        int w = ui->imgOutput->width();
     int h = ui->imgOutput->height();
-    qDebug() << "width: " << w;
-    ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
 
+    ui->imgOutput->setPixmap(img.scaled(w,h,Qt::KeepAspectRatio));
+}
+//        ui->imgOutput->setPixmap(img);
+    imageReady=true;
+    //    resizeImage();
+    connect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
 }
 
 void Widget::on_stopButton_clicked()
@@ -142,11 +167,40 @@ void Widget::resizeEvent(QResizeEvent *ev)
 {
     if(imageReady)
     {
-        const QPixmap *p = ui->imgOutput->pixmap();
-        int w = ui->imgOutput->width();
-        int h = ui->imgOutput->height();
-        qDebug() << "width: " << w;
-        ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
+        resizeImage();
     }
     QWidget::resizeEvent(ev);
+}
+
+void Widget::parseImageData(QByteArray data)
+{
+    if(data.at(0)=='-' && data.at(1)=='-')
+    {
+        //        jpegBA.clear();
+        // Collect JPEG frame size
+        data.remove(0,61);
+        QByteArray chunk = data;
+
+        data = data.trimmed();
+        data.remove(5,8);
+        jpegSize = data.toLong();
+        //        ui->imgDebug->clear();
+        //        ui->imgDebug->appendPlainText(QString("%1 bytes expected").arg(jpegSize));
+
+        chunk.remove(0,14);
+        assembleJPEG(chunk); // send to jpeg assembler
+        status=1;
+    }
+
+}
+
+void Widget::resizeImage()
+{
+    if(imageReady)
+    {
+    const QPixmap *p = ui->imgOutput->pixmap();
+    int w = ui->imgOutput->width();
+    int h = ui->imgOutput->height();
+    ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
+    }
 }

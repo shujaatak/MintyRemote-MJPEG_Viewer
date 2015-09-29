@@ -32,6 +32,8 @@ private slots:
     void on_stopButton_clicked();
 
 private:
+    void resizeImage();
+    void parseImageData(QByteArray);
     Ui::Widget *ui;
     QUrl url;
     QNetworkAccessManager qnam;
@@ -40,6 +42,7 @@ private:
     quint32 jpegSize;
     QByteArray jpegBA;
     bool imageReady;
+    quint8 status;
 };
 
 #endif // WIDGET_H
