@@ -6,6 +6,8 @@
 #include <QNetworkReply>
 #include <QUrl>
 #include <QMessageBox>
+#include <QNetworkSession>
+#include <QRegExp>
 
 namespace Ui {
 class Widget;
@@ -26,23 +28,31 @@ public:
 private slots:
     void httpFinished();
     void httpReadyRead();
-    void assembleJPEG(QByteArray);
+
     void displayJPEG();
 
     void on_stopButton_clicked();
 
 private:
     void resizeImage();
-    void parseImageData(QByteArray);
+    bool attemptStart();
+    void assembleJPEG();
+
     Ui::Widget *ui;
     QUrl url;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
     bool httpRequestAborted;
-    quint32 jpegSize;
+    quint16 jpegSize;
+    quint16 payloadSize;
     QByteArray jpegBA;
     bool imageReady;
+    bool frameStarted;
     quint8 status;
+    QString mjpegLine1;
+    QString mjpegLine2;
+    QString mjpegLine3;
+    QByteArray response;
 };
 
 #endif // WIDGET_H

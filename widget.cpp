@@ -6,13 +6,27 @@ Widget::Widget(QWidget *parent) :
     ui(new Ui::Widget)
 {
     ui->setupUi(this);
-    url = QUrl::fromEncoded("http://192.168.0.101:8081");
-    startRequest(url);
-    jpegBA.clear();
-    imageReady=false;
-    status=0;
+
+    ui->stopButton->hide();
     ui->imgDebug->hide();
-//    ui->imgOutput->hide();
+    mjpegLine1.append("--BoundaryString\r\n"
+                      "Content-type: image/jpeg\r\n"
+                      "Content-Length:\\s+");
+    mjpegLine2.append("\\d+");
+    mjpegLine3.append("(\r\n)+");
+
+    jpegBA.clear();
+    frameStarted = false;
+    response.clear();
+
+    url = QUrl::fromEncoded("http://192.168.0.146:8081");
+    //    url = QUrl::fromEncoded("http://24.52.217.108:8090");
+    startRequest(url);
+
+    //    imageReady=false;
+    //    status=0;
+    //    ui->imgDebug->hide();
+    //    ui->imgOutput->hide();
 }
 
 Widget::~Widget()
@@ -84,75 +98,120 @@ void Widget::httpReadyRead()
     // That way we use less RAM than when reading it at the finished()
     // signal of the QNetworkReply
 
-    QByteArray response = reply->readAll();
-//    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+    response = reply->readAll();
+//disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
 
-    switch(status)
+    while(!response.isEmpty())
     {
-    case 0: // No START FRAME has been received
-        parseImageData(response);
-
-        break;
-    case 1: // Frame is already being built
-        assembleJPEG(response);
-        break;
-    default:
-        break;
+//        qDebug() << "response has " << response.size() << " bytes, " << frameStarted;
+        if(!frameStarted)
+        {
+            if(attemptStart())
+            {
+                frameStarted = true;
+                jpegBA.clear();
+                payloadSize=0;
+            }
+            else
+            {
+                response.clear();
+            }
+        }
+        else
+        {
+            // Assign bytes to existing payload
+            assembleJPEG();
+        }
     }
-
-    //        ui->imgDebug->appendPlainText("New packet:");
-    //        ui->imgDebug->appendPlainText(response);
+//connect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
 }
 
-void Widget::assembleJPEG(QByteArray packet)
+bool Widget::attemptStart()
 {
-    // Is new packet going to go over the limit of the JPEG frame size?
-//    qDebug() << "Current size: " << jpegBA.size() << ", "
-//             << "JPEG frame: " << jpegSize << ", "
-//             << "incoming packet: " << packet.size() << ", bytes needed: " << jpegSize-jpegBA.size();
+    QRegExp rx = QRegExp(mjpegLine1);
+    int pos = rx.indexIn(response);
+    if(pos != -1)
+    {
+        ui->imgDebug->clear();
+        ui->imgDebug->appendPlainText(QString("%1 bytes received:").arg(response.size()));
 
-    //    jpegBA.append(packet);
+        ui->imgDebug->appendPlainText("MJpeg header found");
+        ui->imgDebug->appendPlainText(QString("%1 bytes matched").arg(rx.matchedLength()));
+        response.remove(0,pos+rx.matchedLength());
 
-    // Only append as many bytes as needed to complete the frame.
-    quint32 bytesNeeded = jpegSize-jpegBA.size();
-    jpegBA.append(packet.left(bytesNeeded));
-//    qDebug() << "Current size: " << jpegBA.size();
-    if(jpegBA.size()>=jpegSize)
+        rx.setPattern(mjpegLine2);
+        rx.indexIn(response);
+        jpegSize = rx.cap(0).toLong();
+        ui->imgDebug->appendPlainText(QString("%1 bytes expected").arg(jpegSize));
+        response.remove(0,rx.matchedLength());
+
+        rx.setPattern(mjpegLine3);
+        rx.indexIn(response);
+        ui->imgDebug->appendPlainText(QString("%1 ws chars removed").arg(rx.matchedLength()));
+        response.remove(0,rx.matchedLength());
+
+        ui->imgDebug->appendPlainText(QString("%1 payload bytes left").arg(response.size()));
+        //            ui->imgDebug->appendPlainText(response);
+        return true;
+    }
+    else
+    {
+        ui->imgDebug->appendPlainText("No frame start");
+        return false;
+    }
+}
+
+void Widget::assembleJPEG()
+{
+    quint16 bytesNeeded = jpegSize-payloadSize;
+    ui->imgDebug->appendPlainText(QString("%1 bytes needed").arg(bytesNeeded));
+
+    // Two options:
+    // 1. The response array has enough bytes to complete the frame
+        // 2. The response array will not complete the frame
+    if(response.size()>=bytesNeeded)
+    {
+        ui->imgDebug->appendPlainText("Complete JPEG");
+        jpegBA.append(response.left(bytesNeeded));
+        payloadSize+=bytesNeeded;
+        response.remove(0,bytesNeeded);
+//        frameStarted=false;
+//        response.clear();
+    }
+
+    else
+    {
+        ui->imgDebug->appendPlainText("Use up response");
+        jpegBA.append(response);
+        payloadSize+=response.size();
+        response.clear();
+    }
+
+    if(payloadSize>=jpegSize)
     {
         jpegBA.chop(2);
         displayJPEG();
         jpegBA.clear();
-        status=0;
-
-        packet.remove(0, bytesNeeded+2);
-        if(packet.size()>0)
-        {
-//            qDebug() << packet.size() << " bytes left in packet";
-            parseImageData(packet);
-            //            ui->imgDebug->appendPlainText("Bytes left:");
-            //            ui->imgDebug->appendPlainText(packet);
-        }
-
+        frameStarted=false;
+        response.clear();
     }
-//    connect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
-
 }
 
 void Widget::displayJPEG()
 {
-     disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
 
     QPixmap img;
-//    qDebug() << "jpegBA size: " << jpegBA.size();
+    //    qDebug() << "jpegBA size: " << jpegBA.size();
     img.loadFromData(jpegBA);
-if(!img.isNull())
-{
+    if(!img.isNull())
+    {
         int w = ui->imgOutput->width();
-    int h = ui->imgOutput->height();
+        int h = ui->imgOutput->height();
 
-    ui->imgOutput->setPixmap(img.scaled(w,h,Qt::KeepAspectRatio));
-}
-//        ui->imgOutput->setPixmap(img);
+        ui->imgOutput->setPixmap(img.scaled(w,h,Qt::KeepAspectRatio));
+    }
+    //        ui->imgOutput->setPixmap(img);
     imageReady=true;
     //    resizeImage();
     connect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
@@ -172,35 +231,13 @@ void Widget::resizeEvent(QResizeEvent *ev)
     QWidget::resizeEvent(ev);
 }
 
-void Widget::parseImageData(QByteArray data)
-{
-    if(data.at(0)=='-' && data.at(1)=='-')
-    {
-        //        jpegBA.clear();
-        // Collect JPEG frame size
-        data.remove(0,61);
-        QByteArray chunk = data;
-
-        data = data.trimmed();
-        data.remove(5,8);
-        jpegSize = data.toLong();
-        //        ui->imgDebug->clear();
-        //        ui->imgDebug->appendPlainText(QString("%1 bytes expected").arg(jpegSize));
-
-        chunk.remove(0,14);
-        assembleJPEG(chunk); // send to jpeg assembler
-        status=1;
-    }
-
-}
-
 void Widget::resizeImage()
 {
     if(imageReady)
     {
-    const QPixmap *p = ui->imgOutput->pixmap();
-    int w = ui->imgOutput->width();
-    int h = ui->imgOutput->height();
-    ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
+        const QPixmap *p = ui->imgOutput->pixmap();
+        int w = ui->imgOutput->width();
+        int h = ui->imgOutput->height();
+        ui->imgOutput->setPixmap(p->scaled(w,h,Qt::KeepAspectRatio));
     }
 }

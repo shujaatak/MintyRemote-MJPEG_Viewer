@@ -34,7 +34,7 @@ public:
     {
         if (Widget->objectName().isEmpty())
             Widget->setObjectName(QStringLiteral("Widget"));
-        Widget->resize(382, 317);
+        Widget->resize(508, 349);
         horizontalLayout = new QHBoxLayout(Widget);
         horizontalLayout->setSpacing(6);
         horizontalLayout->setContentsMargins(11, 11, 11, 11);
@@ -51,6 +51,7 @@ public:
 
         imgDebug = new QPlainTextEdit(Widget);
         imgDebug->setObjectName(QStringLiteral("imgDebug"));
+        imgDebug->setMinimumSize(QSize(200, 0));
 
         horizontalLayout->addWidget(imgDebug);
 
